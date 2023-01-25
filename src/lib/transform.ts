@@ -1,5 +1,5 @@
 import { fetchFile } from "@ffmpeg/ffmpeg";
-import { Clip, Timeline, Video, Library, useFF, useConfig } from "./state";
+import { Clip, Timeline, Video, Library, useFF, useConfig, useTimeline } from "./state";
 
 function sec_to_timestamp(seconds: number){
     const hours = Math.floor(seconds / 3600);
@@ -8,18 +8,32 @@ function sec_to_timestamp(seconds: number){
     return `${hours}:${minutes}:${secs}`;
 }
 
-async function export_timeline(tl: Timeline){
+function ilog(...args: any[]){
+    console.log("[info]", ...args)
+}
+
+async function export_timeline(){
     const ff = useFF.getState().ff;
+    const tl = useTimeline.getState();
     const clips = tl.clips;
-    let concatstr = "concat:";
+    console.log("[info]", clips)
+    let flst = [];
     for (let i = 0; i < clips.length; i++){
         const clip = clips[i];
-        concatstr+=`${clip.location}`;
-        if(i<clips.length-1){
-            concatstr+="|";
-        }
+        const filoc = `i${i}.mp4`
+        const foloc = `i${i}.ts`
+        // transform it into ts
+        ff.FS("writeFile", filoc, await fetchFile(clip.location))
+        await ff.run('-i', filoc, '-c', 'copy', foloc)
+        flst.push(`file '${foloc}'`);
     }
-    await ff.run('-i', concatstr, '-c', 'copy', 'output.mp4');
+    ff.FS("writeFile", "concat_list.txt", flst.join("\n"));
+    console.log("[info]",ff.FS("readdir","."));
+    let ffcommand = []
+    ffcommand.push("-c:v", "libx264"),
+    ffcommand.push(['-preset', 'ultrafast'])
+    ffcommand.push(['-f', 'concat', '-safe', '0', '-i', 'concat_list.txt', 'output.mp4'])
+    await ff.run('-f', 'concat', '-safe', '0', '-i', 'concat_list.txt', 'output.mp4', "-preset", "ultrafast");
     const data = ff.FS('readFile', 'output.mp4');
     const url = URL.createObjectURL(new Blob([data.buffer], {type: 'video/mp4'}));
     return url
@@ -38,19 +52,13 @@ async function process_video(video: Video): Promise<string>{
 }
 
 async function vid_to_clip(video: Video):Promise<Clip>{
-    // Use ffmpeg to convert video to a standard 720p 24fps clip
-    const ff = useFF.getState().ff;
-    const config = useConfig.getState();
-    const s = `scale=${config.width}:${config.height}`;
-    const fps = config.fps;
-    ff.FS("writeFile", video.name, await fetchFile(video.location))
-    await ff.run('-i', video.name, '-vf', s, '-r', fps.toString(), 'output.mp4');
-    const data = ff.FS('readFile', 'output.mp4');
-    const url = URL.createObjectURL(new Blob([data.buffer], {type: 'video/mp4'}));
+    const duration = video.fileInfo.format.duration as unknown as number;
     return {
-        location: url,
-        start: null,
-        end: null,
+        name: video.name,
+        location: video.location,
+        duration: duration,
+        start:null,
+        end: null
     }
 }
 

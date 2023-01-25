@@ -3,32 +3,38 @@ import { useFF, useLibrary } from "@/lib/state";
 import { useDropzone } from "react-dropzone";
 import VideoCard from "./VideoCard";
 import { fetchFile } from "@ffmpeg/ffmpeg";
+import { FFprobeWorker, FileInfo } from "ffprobe-wasm";
+
+const worker = new FFprobeWorker();
 
 export default function FileUpload(){
   const files = useLibrary((state) => state.files);
   const addFile = useLibrary((state) => state.addFile);
   const ff = useFF((st) => st.ff);
 
-  const getThumbnail = async (fileloc: string) => {
+  const getMetaData = async (fileloc: string, file:File): Promise<[string, FileInfo]> =>{
     ff.FS("writeFile", "input.mp4", await fetchFile(fileloc));
     // get the first frame of the video and store it in {file}.png
     await ff.run("-i", "input.mp4", "-ss", "00:00:01.000", "-vframes", "1", "output.png");
     const data = ff.FS("readFile", "output.png");
     const url = URL.createObjectURL(new Blob([data.buffer], {type: "image/png"}));
-    return url
+    const fileInfo = await worker.getFileInfo(file);
+    console.log(fileInfo)
+    return [url, fileInfo];
   }
 
   const onDrop = useCallback((acceptedFiles:File[])=> {
     acceptedFiles.forEach((file) => {
       let stored_file = URL.createObjectURL(file);
       let thumbnail = null;
-      getThumbnail(stored_file).then((url) => {
+      getMetaData(stored_file, file).then(([url, fileInfo]) => {
         thumbnail = url;
         addFile({
           location: stored_file,
           name: file.name,
           thumbnail: thumbnail,
           processed: false,
+          fileInfo: fileInfo
         });
         console.log("file added")
       });

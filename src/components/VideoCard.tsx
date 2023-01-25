@@ -3,16 +3,29 @@ import { Video } from '@/lib/state'
 import Image from 'next/image'
 import { Clip, useTimeline } from '@/lib/state'
 import { process_video, vid_to_clip } from '@/lib/transform'
+import { useDrag } from 'react-dnd'
+import { ItemTypes } from '@/lib/constants'
 
 interface VideoCardProps {
-    video: Video
+    video: Video,
+    isDragging: boolean
 }
 
-const VideoCard: React.FC<VideoCardProps> = ({ video }) => {
+const VideoCard: React.FC<VideoCardProps> = ({ video, isDragging}) => {
     let addClip = useTimeline((st) => st.addClip);
     let [processing , setProcessing] = React.useState(false);
+    const [{opacity}, dragRef] = useDrag(
+        () => ({
+            type: ItemTypes.VIDEO,
+            item: {video},
+            collect: (monitor) => ({
+                opacity: monitor.isDragging()?0.5:1
+            })
+        }),
+        []
+    )
   return (
-    <div className='m-1 p-2 w-40 border-2 border-solid inline-block'>
+    <div className='m-1 p-2 w-40 border-2 border-solid inline-block' style={{opacity}} ref={dragRef}>
         <div>
             <h2 className='text-sm'>{video.name}</h2>
             {

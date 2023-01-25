@@ -12,6 +12,8 @@ import Exporter from '@/components/Exporter'
 export default function Home() {
   const ff = useFF((st) => st.ff);
   const setReady = useFF((st)=> st.setReady);
+  const setProgress = useFF((st)=> st.setProgress);
+  const progress = useFF((st)=> st.progress);
   const ready = useFF((st)=> st.ready);
   const load = async () => {
     if(!ff.isLoaded()){
@@ -19,6 +21,10 @@ export default function Home() {
       await ff.load();
       setReady(true);
       console.log("ready!")
+      ff.setProgress(({ratio})=>{
+        console.log("[progress]",ratio);
+        setProgress(ratio);
+      })
     }
   }
 
@@ -31,6 +37,11 @@ export default function Home() {
       <FileUpload />
       <TimeLine/>
       <Exporter />
+      {
+       (Number.isNaN(progress) || progress<1)?
+       <progress className='progress progress-primary w-56 block mt-10'/>
+       :<progress className='progress progress-primary w-56 block mt-10' value={1} max={1}/>
+      }
     </DndProvider>
   ):(
     <div>
