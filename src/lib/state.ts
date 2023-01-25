@@ -3,10 +3,13 @@ import { create } from "zustand";
 
 export interface Clip {
     location: string;
+    start: number | null;
+    end: number | null
 }
 
 export interface Timeline{
     clips: Clip[];
+    cursor: number;
     addClip: (clip: Clip) => void;
     removeClip: (clip: Clip) => void;
 }
@@ -14,6 +17,8 @@ export interface Timeline{
 export interface Video{
     location: string;
     name: string;
+    thumbnail: string | null;
+    processed: boolean
     // file: object;
 }
 
@@ -29,9 +34,17 @@ export interface ff{
     setReady: (ready: boolean) => void;
 }
 
+export interface Config{
+    fps: number;
+    width: number;
+    height: number;
+    project_name: string
+}
+
 // export funcs
 export const useTimeline = create<Timeline>(set => ({
     clips: [],
+    cursor: 0,
     addClip: (clip: Clip) => set(state => ({ clips: [...state.clips, clip] })),
     removeClip: (clip: Clip) => set(state => ({ clips: state.clips.filter(c => c.location !== clip.location) }))
 }));
@@ -45,8 +58,15 @@ export const useLibrary = create<Library>(set => ({
 export const useFF = create<ff>(set => ({
     ff: createFFmpeg({
         log: true,
-        corePath: "https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js",
+        corePath: "https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js",
     }),
     ready: false,
     setReady: (r: boolean) => set(_ => ({ready: r}))
+}))
+
+export const useConfig = create<Config>(set => ({
+    fps: 24,
+    width: 1280,
+    height: 720,
+    project_name: "untitled project"
 }))
