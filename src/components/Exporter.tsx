@@ -7,7 +7,7 @@ const Exporter = () => {
     const [loading, setLoading] = React.useState(false);
   return (
     <button className='btn btn-primary' onClick={() => {
-        export_timeline(timeline).then((l) => {
+        export_timeline().then((l) => {
             let loc = l;
             try{
                 setLoading(true);

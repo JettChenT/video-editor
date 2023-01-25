@@ -1,10 +1,12 @@
 import { createFFmpeg, FFmpeg } from "@ffmpeg/ffmpeg";
 import { FileInfo } from "ffprobe-wasm";
 import { create } from "zustand";
+import { ilog } from "./transform";
 
 export interface Clip {
     name: string;
     location: string;
+    id: string;
     duration: number;
     start: number | null;
     end: number | null
@@ -13,8 +15,10 @@ export interface Clip {
 export interface Timeline{
     clips: Clip[];
     cursor: number;
+    activeId: string | null;
     addClip: (clip: Clip) => void;
     removeClip: (clip: Clip) => void;
+    changeTimeline: (newClips: Clip[]) => void;
 }
 
 export interface Video{
@@ -52,8 +56,10 @@ export interface Config{
 export const useTimeline = create<Timeline>(set => ({
     clips: [],
     cursor: 0,
-    addClip: (clip: Clip) => set(state => ({ clips: [...state.clips, clip] })),
-    removeClip: (clip: Clip) => set(state => ({ clips: state.clips.filter(c => c.location !== clip.location) }))
+    activeId:null,
+    addClip: (clip: Clip) => {set(state => ({ clips: [...state.clips, clip] }));ilog("add clip called")},
+    removeClip: (clip: Clip) => set(state => ({ clips: state.clips.filter(c => c.location !== clip.location) })),
+    changeTimeline: (newClips: Clip[]) => set(state => ({ clips: newClips }))
 }));
 
 export const useLibrary = create<Library>(set => ({

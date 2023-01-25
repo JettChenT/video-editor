@@ -1,3 +1,4 @@
-export const ItemTypes = {
-    VIDEO: "video"
+export const DragTypes = {
+    VIDEO: "video",
+    VIDEO_CLIP: "videoClip",
 }
