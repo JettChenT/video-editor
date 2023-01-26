@@ -1,5 +1,8 @@
 import { createFFmpeg, FFmpeg } from "@ffmpeg/ffmpeg";
+import { setServers } from "dns";
 import { FileInfo } from "ffprobe-wasm";
+import { stat } from "fs";
+import { createRef, useRef } from "react";
 import { create } from "zustand";
 import { ilog } from "./transform";
 
@@ -16,6 +19,8 @@ export interface Timeline{
     clips: Clip[];
     cursor: number;
     playing: boolean;
+    cursorDragging: boolean;
+    vidRef: React.RefObject<HTMLVideoElement>;
     currentClip: number | null;
     startTime: number[];
     activeId: string | null;
@@ -23,8 +28,11 @@ export interface Timeline{
     removeClip: (clip: Clip) => void;
     splitClip: (loc: number) => void;
     removeClipCursor: (loc: number) => void;
+    updateCursor: (newCursor: number, incremental: boolean) => void;
     changeTimeline: (newClips: Clip[]) => void;
     updateStartTime: () => void;
+    updateVidInfo: ()=>void;
+    playpause: ()=>void;
 }
 
 export interface Video{
@@ -59,7 +67,15 @@ export interface Config{
 }
 
 const findCursor = (cursor: number, timeline: Timeline):number => {
-    return timeline.clips.findIndex((t, i)=> timeline.startTime[i] < cursor && timeline.startTime[i]+t.duration>cursor)
+    timeline.updateStartTime();
+    const res = timeline.clips.findIndex((t, i)=> timeline.startTime[i] <= cursor && timeline.startTime[i]+t.duration>cursor)
+    ilog({
+        "result": res,
+        "stTime": timeline.startTime,
+        "cursor": cursor,
+        "clips": timeline.clips
+    }) 
+    return res;
 }
 
 // export funcs
@@ -68,15 +84,19 @@ export const useTimeline = create<Timeline>((set, get) => ({
     cursor: 0,
     activeId:null,
     playing: false,
+    cursorDragging: false,
+    vidRef: createRef<HTMLVideoElement>(),
     startTime: [],
     currentClip: null,
     addClip: (clip: Clip) => {
         set(state => ({ clips: [...state.clips, clip] }));
         get().updateStartTime();
+        get().updateVidInfo();
     },
     removeClip: (clip: Clip) => {
         set(state => ({ clips: state.clips.filter(c => c.location !== clip.location) }));
         get().updateStartTime();
+        get().updateVidInfo();
     },
     splitClip: (loc: number) => {
         let clipn = findCursor(loc, get());
@@ -96,12 +116,14 @@ export const useTimeline = create<Timeline>((set, get) => ({
                 return {clips: state.clips};
             });
             get().updateStartTime();
+            get().updateVidInfo();
         }
     },
     removeClipCursor: (loc:number) => {
         let clipn = findCursor(loc, get());
         if(clipn>=0){
             get().removeClip(get().clips[clipn]);
+            get().updateVidInfo();
         }
     },
     changeTimeline: (newClips: Clip[]) => {
@@ -123,11 +145,31 @@ export const useTimeline = create<Timeline>((set, get) => ({
     updateCursor: (newCursor: number, incremental: boolean) => {
         set(state => {
             const cursor = incremental ? state.cursor + newCursor : newCursor;
-            // TODO: improve performance of this for incremental
             let currentClip: number|null = findCursor(cursor, state); 
+            if(currentClip != state.currentClip)state.updateVidInfo();
             if(currentClip === -1)currentClip=null;
             return { cursor: cursor, currentClip: currentClip };
         });
+    },
+    updateVidInfo: () => {
+        let state = get();
+        if(state.currentClip){
+            // const clip = state.clips[state.currentClip];
+            const psec = state.cursor - state.startTime[state.currentClip];
+            if(state.vidRef.current){
+                state.vidRef.current.currentTime = psec;
+            }
+        }
+    },
+    playpause: () => {
+        set(state => {
+            if(state.playing){
+                state.vidRef.current?.pause();
+            }else{
+                state.vidRef.current?.play();
+            }
+            return {playing: !state.playing}
+        })
     }
 }));
 

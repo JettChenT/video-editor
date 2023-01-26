@@ -9,6 +9,7 @@ import TimeLine from '@/components/TimeLine'
 import Exporter from '@/components/Exporter'
 import { ilog, import_video, vid_to_clip, handleDragEnd, handleDragStart } from '@/lib/transform'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import VideoPlayer from '@/components/VideoPlayer'
 
 export default function Home() {
   const ff = useFF((st) => st.ff);
@@ -44,6 +45,7 @@ export default function Home() {
   return ready?(
     <DndContext onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
       <FileUpload />
+      <VideoPlayer/>
       <TimeLine/>
       <Exporter />
       {

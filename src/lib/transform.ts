@@ -65,11 +65,16 @@ function import_video(video: Video) {
     });
 }
 
-function sec_to_timestamp(seconds: number) {
+function sec_to_timestamp(seconds: number, fps: null|number=null) {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = Math.floor((seconds % 3600) % 60);
-  return `${hours}:${minutes}:${secs}`;
+  let resp = `${hours}:${minutes}:${secs}`;
+  if (fps!=null){
+    const frame = Math.floor((seconds % 1) * fps);
+    resp += `:${frame}`;
+  }
+  return resp;
 }
 
 function ilog(...args: any[]) {
@@ -137,7 +142,7 @@ async function process_video(video: Video): Promise<string> {
 }
 
 async function vid_to_clip(video: Video): Promise<Clip> {
-  const duration = video.fileInfo.format.duration as unknown as number;
+  const duration = Number(video.fileInfo.format.duration);
   return {
     name: video.name,
     location: video.location,
