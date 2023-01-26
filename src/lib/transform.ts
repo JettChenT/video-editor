@@ -142,9 +142,9 @@ async function vid_to_clip(video: Video): Promise<Clip> {
     name: video.name,
     location: video.location,
     duration: duration,
-    start: null,
+    start: 0,
     id: uuidv4(),
-    end: null,
+    end: duration,
   };
 }
 

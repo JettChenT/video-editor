@@ -19,24 +19,28 @@ const rand_colors = [
 
 const TimeLine = () => {
   const [gapsec, setGapsec] = useState(1);
-  const timeline = useTimeline((st) => st.clips);
+  const cursor = useTimeline((st)=>st.cursor);
+  const clips = useTimeline((st) => st.clips);
   const config = useConfig.getState();
   const activeId = useTimeline.getState().activeId;
   const { isOver, setNodeRef } = useDroppable({
     id: "timeline",
   });
   const style = isOver ? "bg-green-100" : "";
-  console.log(timeline);
+  const cursorStyle = {
+    transform: `translateX(${cursor * config.pixel_per_second}px)`,
+  }
+  console.log(clips);
 
   return (
     <div className={`cursor-grab overflow-x-scroll overflow-y-hidden flex flex-col h-full ${style}`} ref={setNodeRef}>
       <TimeTicks gap={gapsec} />
       <div className="h-full min-h-16">
         <SortableContext
-            items={timeline}
+            items={clips}
             strategy={horizontalListSortingStrategy}
             >
-        {timeline.map((clip, i) => {
+        {clips.map((clip, i) => {
             return (
                 <VideoClip
                     key={clip.id}
@@ -50,6 +54,7 @@ const TimeLine = () => {
             {activeId? <Item id={activeId} /> : null}
         </DragOverlay>
       </div>
+      <div className="w-1 h-full bg-gray-500" style={cursorStyle}/>
     </div>
   );
 };
