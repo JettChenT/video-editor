@@ -21,6 +21,12 @@ const VideoControls = () => {
         }}>
             {playing? "Pause" : "Play"}
         </button>
+        <button className='btn btn-primary' onClick={()=>{
+            useTimeline.getState().splitClip(cursor);
+        }}>
+            Split
+        </button>
+
         {sec_to_timestamp(cursor, useConfig.getState().fps)}
     </div>
   )

@@ -24,10 +24,10 @@ const VideoPlayer = () => {
                 ref={videoRef} 
                 controls
                 src={src?src:""}
-                // style ={{
-                //     "width": useConfig(state => state.width)+"px",
-                //     "height": useConfig(state => state.height)+"px",
-                // }}
+                style ={{
+                    "width": "720px",
+                    "height":"360px",
+                }}
             >
             </video>
             <VideoControls/>

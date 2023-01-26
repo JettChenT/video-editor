@@ -24,12 +24,13 @@ const VideoCard: React.FC<VideoCardProps> = ({ video }) => {
   const style = transform
     ? {
         transform: CSS.Translate.toString(transform),
+        zIndex: 999,
       }
     : undefined;
 
   return (
-    <div className="m-1 p-2 w-40 border-2 border-solid inline-block">
-      <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+    <div className="m-1 p-2 w-40 border-2 border-solid inline-block" ref={setNodeRef} >
+      <div style={style} {...listeners} {...attributes}>
         <h2 className="text-sm">{video.name}</h2>
         {video.thumbnail && (
           <Image

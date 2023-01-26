@@ -29,7 +29,7 @@ const TimeLine = () => {
     id: "timeline",
     disabled: cursorDragging
   });
-  const style = isOver ? "bg-green-100" : "";
+  const style = isOver ? "bg-green-100/25" : "";
  
   console.log(clips);
 

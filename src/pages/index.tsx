@@ -44,8 +44,14 @@ export default function Home() {
 
   return ready?(
     <DndContext onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
-      <FileUpload />
-      <VideoPlayer/>
+      <div className='w-full columns-2 h-1/2'>
+        <div className='w-full h-full'>
+          <FileUpload />
+        </div>
+        <div className='w-full h-full'>
+          <VideoPlayer/>
+        </div>
+      </div>
       <TimeLine/>
       <Exporter />
       {

@@ -51,7 +51,7 @@ export default function FileUpload(){
   return (
     <div 
       {...getRootProps()}
-      className = "h-64 border-2 border-dashed border-gray-400 p-3"
+      className = "border-2 border-dashed border-gray-400 p-3 h-80"
     >
       {isDragActive ? (
         <p>Ready set drop!</p>
