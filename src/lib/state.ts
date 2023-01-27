@@ -172,6 +172,10 @@ export const useTimeline = create<Timeline>((set, get) => ({
         }
         if(currentClip !== get().currentClip || !incremental){
             ilog("current clip changed", currentClip, get().currentClip);
+            if(vref.current && currentClip!==null){
+                vref.current.src = get().clips[currentClip].location;
+            }
+
             set({currentClip: currentClip});
             get().updateVidInfo();
             if(get().playing){
