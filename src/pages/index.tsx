@@ -10,6 +10,7 @@ import Exporter from '@/components/Exporter'
 import { ilog, import_video, vid_to_clip, handleDragEnd, handleDragStart } from '@/lib/transform'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import VideoPlayer from '@/components/VideoPlayer'
+import VideoControls from '@/components/VideoControls'
 
 export default function Home() {
   const ff = useFF((st) => st.ff);
@@ -52,6 +53,7 @@ export default function Home() {
           <VideoPlayer/>
         </div>
       </div>
+      <VideoControls/>
       <TimeLine/>
       <Exporter />
       {

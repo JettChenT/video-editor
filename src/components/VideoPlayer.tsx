@@ -26,11 +26,18 @@ const VideoPlayer = () => {
                 src={src?src:""}
                 style ={{
                     "width": "720px",
-                    "height":"360px",
+                    "height": "360px",
+                }}
+                onPlay={(e)=>{
+                    ilog("playpause: ==play");
+                    e.preventDefault()
+                }}
+                onPause={(e)=>{
+                    ilog("playpause: ==pause", e);
+                    e.preventDefault()
                 }}
             >
             </video>
-            <VideoControls/>
         </>
     )
 }

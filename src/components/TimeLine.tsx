@@ -5,8 +5,9 @@ import { DragOverlay, KeyboardSensor, PointerSensor, useDndMonitor, useDroppable
 import VideoClip from "./VideoClip";
 import { horizontalListSortingStrategy, SortableContext, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useSensors, useSensor,  } from "@dnd-kit/core";
-import Item from "./Item";
+import Item from "./VideoClipItem";
 import Cursor from "./Cursor";
+import { ilog } from "@/lib/transform";
 
 const rand_colors = [
   "bg-red-300",
@@ -19,12 +20,12 @@ const rand_colors = [
 ];
 
 const TimeLine = () => {
-  const [gapsec, setGapsec] = useState(1);
   const clips = useTimeline((st) => st.clips);
+  const clipln = useTimeline((st) => st.clips.length)
   const cursorDragging = useTimeline((st) => st.cursorDragging);
   const updateCursor = useTimeline((st) => st.updateCursor);
-  const config = useConfig.getState();
-  const activeId = useTimeline.getState().activeId;
+  const config = useConfig();
+  const activeId = useTimeline((st)=>st.activeId);
   const { isOver, setNodeRef } = useDroppable({
     id: "timeline",
     disabled: cursorDragging
@@ -33,13 +34,20 @@ const TimeLine = () => {
  
   console.log(clips);
 
+  const procClick = (e: React.MouseEvent) => {
+    const scrollcnt = document.getElementById("timeline-base")?.scrollLeft;
+    const newcursor = (e.clientX+Number(scrollcnt)) / config.pixel_per_second; 
+    return newcursor
+  }
+
   return (
     <div 
-      className={`cursor-grab overflow-x-scroll overflow-y-hidden relative flex flex-col h-full ${style}`} 
+      className={`cursor-grab overflow-x-scroll overflow-y-hidden relative flex flex-col h-30 h-max-30 whitespace-nowrap ${style}`} 
       ref={setNodeRef}
+      id="timeline-base"
       onMouseMove={(e) => {
         if (cursorDragging) {
-          const newcursor = e.clientX / config.pixel_per_second;
+          const newcursor = procClick(e);
           updateCursor(newcursor, false);
         }
         e.preventDefault()
@@ -47,9 +55,12 @@ const TimeLine = () => {
       onMouseDown={(e) => {
         const targetid = (e.target as any).id;
         console.log(targetid);
-        if(targetid=="timeline-scroll" || targetid=="timeticks") {
-          const newcursor = e.clientX / config.pixel_per_second;
-          updateCursor(newcursor, false);
+        switch(targetid){
+          case "timeline-base":
+          case "timeline-scroll":
+          case "timeticks":
+            console.log(e);
+            updateCursor(procClick(e), false);
         }
       }}
       onMouseUp={(e) => {
@@ -61,7 +72,7 @@ const TimeLine = () => {
         e.preventDefault()
       }}
     >
-      <TimeTicks gap={gapsec} />
+      <TimeTicks gap={useConfig((st) => st.pixel_per_gap/st.pixel_per_second)}/>
       <Cursor/>
       <div 
         className="h-full min-h-16"
@@ -71,6 +82,7 @@ const TimeLine = () => {
             items={clips}
             strategy={horizontalListSortingStrategy}
             >
+              {/* {clipln} */}
         {clips.map((clip, i) => {
             return (
                 <VideoClip

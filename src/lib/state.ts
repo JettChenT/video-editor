@@ -4,7 +4,8 @@ import { FileInfo } from "ffprobe-wasm";
 import { stat } from "fs";
 import { createRef, useRef } from "react";
 import { create } from "zustand";
-import { ilog } from "./transform";
+import { ilog, vid_to_clip } from "./transform";
+import {v4 as uuidv4} from 'uuid';
 
 export interface Clip {
     name: string;
@@ -64,9 +65,11 @@ export interface Config{
     height: number;
     project_name: string;
     pixel_per_second: number;
+    pixel_per_gap: number;
+    set_pixel_per_second: (p: number, d:boolean) => void;
 }
 
-const findCursor = (cursor: number, timeline: Timeline):number => {
+const findCursor = (cursor: number, timeline: Timeline):number|null=> {
     timeline.updateStartTime();
     const res = timeline.clips.findIndex((t, i)=> timeline.startTime[i] <= cursor && timeline.startTime[i]+t.duration>cursor)
     ilog({
@@ -75,6 +78,7 @@ const findCursor = (cursor: number, timeline: Timeline):number => {
         "cursor": cursor,
         "clips": timeline.clips
     }) 
+    if(res<0)return null;
     return res;
 }
 
@@ -94,25 +98,26 @@ export const useTimeline = create<Timeline>((set, get) => ({
         get().updateVidInfo();
     },
     removeClip: (clip: Clip) => {
-        set(state => ({ clips: state.clips.filter(c => c.location !== clip.location) }));
+        set(state => ({ clips: state.clips.filter(c => c.id !== clip.id) }));
         get().updateStartTime();
         get().updateVidInfo();
     },
     splitClip: (loc: number) => {
         let clipn = findCursor(loc, get());
-        if(clipn>=0){
+        if(clipn!==null){
             let clip = get().clips[clipn];
             let st = get().startTime[clipn];
             let rightClip = {...clip};
             rightClip.duration = st+clip.duration-loc;
             rightClip.start = clip.end-rightClip.duration;
             rightClip.end = clip.end;
+            rightClip.id = uuidv4();
             let leftClip = {...clip};
             leftClip.duration = clip.duration-rightClip.duration;
             leftClip.end = rightClip.start;
-            // assert (leftClip.duration+rightClip.duration === clip.duration);
+            leftClip.id = uuidv4();
             set(state => {
-                state.clips.splice(clipn, 1, leftClip, rightClip);
+                state.clips.splice(clipn as number, 1, leftClip, rightClip);
                 return {clips: state.clips};
             });
             get().updateStartTime();
@@ -121,7 +126,7 @@ export const useTimeline = create<Timeline>((set, get) => ({
     },
     removeClipCursor: (loc:number) => {
         let clipn = findCursor(loc, get());
-        if(clipn>=0){
+        if(clipn!==null){
             get().removeClip(get().clips[clipn]);
             get().updateVidInfo();
         }
@@ -139,23 +144,39 @@ export const useTimeline = create<Timeline>((set, get) => ({
                 startTime.push(t);
                 t += clips[i].duration;
             }
-            return { startTime: startTime };
+            return { startTime: startTime};
         });
     },
     updateCursor: (newCursor: number, incremental: boolean) => {
-        set(state => {
-            const cursor = incremental ? state.cursor + newCursor : newCursor;
-            let currentClip: number|null = findCursor(cursor, state); 
-            if(currentClip != state.currentClip)state.updateVidInfo();
-            if(currentClip === -1)currentClip=null;
-            return { cursor: cursor, currentClip: currentClip };
-        });
+            // ilog("update cursor called", newCursor, incremental, state.cursor)
+        const cursor = incremental ? get().cursor + newCursor : newCursor;
+        set({cursor:cursor})
+        let currentClip: number|null = findCursor(cursor, get()); 
+        const vref = get().vidRef;
+        if(get().playing && vref.current?.paused){
+            get().updateVidInfo();
+            vref.current.play();
+        }
+        if(currentClip === null && get().playing){
+            get().playpause();
+        }
+        if(currentClip !== get().currentClip || !incremental){
+            ilog("current clip changed", currentClip, get().currentClip);
+            set({currentClip: currentClip});
+            get().updateVidInfo();
+            if(get().playing){
+                vref.current?.play();
+            }
+        }   
     },
     updateVidInfo: () => {
         let state = get();
-        if(state.currentClip){
+        let currentClip = findCursor(state.cursor, state);
+        set({currentClip: currentClip})
+        if(currentClip!=null){
             // const clip = state.clips[state.currentClip];
-            const psec = state.cursor - state.startTime[state.currentClip];
+            const psec = state.cursor - state.startTime[currentClip]+state.clips[currentClip].start;
+            ilog("update vid info", state.currentClip, state.cursor, state.startTime[currentClip], state.clips[currentClip].start, psec)
             if(state.vidRef.current){
                 state.vidRef.current.currentTime = psec;
             }
@@ -163,6 +184,7 @@ export const useTimeline = create<Timeline>((set, get) => ({
     },
     playpause: () => {
         set(state => {
+            ilog("playpause", state.playing)
             if(state.playing){
                 state.vidRef.current?.pause();
             }else{
@@ -190,10 +212,14 @@ export const useFF = create<ff>(set => ({
     setProgress: (p: number) => set(_ => ({progress: p}))
 }))
 
-export const useConfig = create<Config>(set => ({
+export const useConfig = create<Config>((set,get) => ({
     fps: 24,
     width: 1280,
     height: 720,
     project_name: "untitled project",
     pixel_per_second: 40,
+    pixel_per_gap: 40,
+    set_pixel_per_second(p: number, d:boolean=false) { set(_ => ({
+        pixel_per_second: Math.max(1, p+(d?get().pixel_per_second:0))
+    })) },
 }))

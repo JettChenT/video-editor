@@ -20,9 +20,10 @@ const handleDragStart = (event: DragStartEvent) => {
     ilog("drag event start");
     switch(active.data.current?.type){
         case DragTypes.VIDEO:
-            useTimeline.setState({activeId: active.data.current?.video.id})
+            ilog("activeid", useTimeline.getState().activeId)
             break;
         case DragTypes.VIDEO_CLIP:
+            useTimeline.setState({activeId: active.data.current?.clip.id})
             ilog("dragging clip", active.data.current)
             break;
     }
@@ -82,6 +83,7 @@ function ilog(...args: any[]) {
 }
 
 async function export_timeline() {
+  return export_timeline_cmpfilt();
   const ff = useFF.getState().ff;
   const tl = useTimeline.getState();
   const clips = tl.clips;
@@ -94,6 +96,52 @@ async function export_timeline() {
     // transform it into ts
     ff.FS("writeFile", filoc, await fetchFile(clip.location));
     await ff.run("-i", filoc, "-c", "copy", foloc);
+    flst.push(`file '${foloc}'`);
+  }
+  ff.FS("writeFile", "concat_list.txt", flst.join("\n"));
+  console.log("[info]", ff.FS("readdir", "."));
+  let ffcommand = [];
+  ffcommand.push("-c:v", "libx264"), ffcommand.push(["-preset", "ultrafast"]);
+  ffcommand.push([
+    "-f",
+    "concat",
+    "-safe",
+    "0",
+    "-i",
+    "concat_list.txt",
+    "output.mp4",
+  ]);
+  await ff.run(
+    "-f",
+    "concat",
+    "-safe",
+    "0",
+    "-i",
+    "concat_list.txt",
+    "output.mp4",
+    "-preset",
+    "ultrafast"
+  );
+  const data = ff.FS("readFile", "output.mp4");
+  const url = URL.createObjectURL(
+    new Blob([data.buffer], { type: "video/mp4" })
+  );
+  return url;
+}
+async function export_timeline_cmpfilt() {
+  const ff = useFF.getState().ff;
+  const tl = useTimeline.getState();
+  const clips = tl.clips;
+  console.log("[info]", clips);
+  let flst = [];
+  for (let i = 0; i < clips.length; i++) {
+    const clip = clips[i];
+    const filoc = `i${i}.mp4`;
+    const foloc = `i${i}.ts`;
+    // transform it into ts
+    ff.FS("writeFile", filoc, await fetchFile(clip.location));
+    ilog("converting clip", clip.start, clip.end, filoc, foloc);
+    await ff.run("-ss", clip.start.toString(), "-to", clip.end.toString(), "-i", filoc, "-c", "copy", foloc);
     flst.push(`file '${foloc}'`);
   }
   ff.FS("writeFile", "concat_list.txt", flst.join("\n"));

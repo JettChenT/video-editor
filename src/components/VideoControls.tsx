@@ -3,7 +3,8 @@ import { ilog, sec_to_timestamp } from '@/lib/transform';
 import React, { useEffect, useState } from 'react'
 
 const VideoControls = () => {
-    let [playing, setPlaying] = useState(false);
+    let playing = useTimeline((st) => st.playing);
+    let playpause = useTimeline((st) => st.playpause);
     const cursor = useTimeline((st)=>st.cursor);
     useEffect(() => {
         const fps = useConfig.getState().fps;
@@ -17,7 +18,7 @@ const VideoControls = () => {
   return (
     <div>
         <button className='btn btn-primary' onClick={()=>{
-            setPlaying(!playing); 
+            playpause();
         }}>
             {playing? "Pause" : "Play"}
         </button>
@@ -26,8 +27,24 @@ const VideoControls = () => {
         }}>
             Split
         </button>
+        <button className='btn btn-primary' onClick={() => {
+            useTimeline.getState().removeClipCursor(cursor);
+        }}>
+            Delete
+        </button>
 
         {sec_to_timestamp(cursor, useConfig.getState().fps)}
+        <button className='btn btn-primary' onClick={()=>{
+            useConfig.getState().set_pixel_per_second(-4, true);
+        }}>-</button>
+        <input type="range" min="1" max="100" value={useConfig((st)=>st.pixel_per_second)} className="slider" id="myRange" onChange={(e)=>{
+            useConfig.getState().set_pixel_per_second(parseInt(e.target.value), false);
+        }}/> 
+        <button className='btn btn-primary' onClick={()=>{
+            useConfig.getState().set_pixel_per_second(4, true);
+        }}>+</button>
+        
+        
     </div>
   )
 }
