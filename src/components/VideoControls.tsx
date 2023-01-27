@@ -7,7 +7,6 @@ import {
   TrashIcon,
   ScissorsIcon,
 } from "@heroicons/react/24/solid";
-import SplitIcon from "./Icons/SplitIcon";
 import IconBtn from "./IconBtn";
 
 const VideoControls = () => {
