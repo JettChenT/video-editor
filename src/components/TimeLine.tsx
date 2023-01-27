@@ -1,10 +1,9 @@
 import React, { use, useState } from "react";
 import TimeTicks from "./TimeTicks";
 import { useTimeline, useConfig } from "@/lib/state";
-import { DragOverlay, KeyboardSensor, PointerSensor, useDndMonitor, useDroppable } from "@dnd-kit/core";
+import { DragOverlay, useDroppable } from "@dnd-kit/core";
 import VideoClip from "./VideoClip";
-import { horizontalListSortingStrategy, SortableContext, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { useSensors, useSensor,  } from "@dnd-kit/core";
+import { horizontalListSortingStrategy, SortableContext} from "@dnd-kit/sortable";
 import Item from "./VideoClipItem";
 import Cursor from "./Cursor";
 import { ilog } from "@/lib/transform";
@@ -21,7 +20,6 @@ const rand_colors = [
 
 const TimeLine = () => {
   const clips = useTimeline((st) => st.clips);
-  const clipln = useTimeline((st) => st.clips.length)
   const cursorDragging = useTimeline((st) => st.cursorDragging);
   const updateCursor = useTimeline((st) => st.updateCursor);
   const config = useConfig();

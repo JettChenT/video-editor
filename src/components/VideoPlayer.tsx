@@ -22,7 +22,7 @@ const VideoPlayer = () => {
         <div>
             <video 
                 ref={videoRef} 
-                src={src?src:""}
+                // src={src?src:""}
                 className="bg-black h-full w-full"
                 onPlay={(e)=>{
                     ilog("playpause: ==play");

@@ -1,5 +1,4 @@
 import { useConfig, useTimeline } from "@/lib/state";
-import { ilog } from "@/lib/transform";
 import React from "react";
 
 const Cursor = () => {
