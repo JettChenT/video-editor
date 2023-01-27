@@ -70,10 +70,11 @@ function sec_to_timestamp(seconds: number, fps: null|number=null) {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = Math.floor((seconds % 3600) % 60);
-  let resp = `${hours}:${minutes}:${secs}`;
+  const pad = (n:number)=>n.toString().padStart(2, "0");
+  let resp = `${pad(hours)}:${pad(minutes)}:${pad(secs)}`;
   if (fps!=null){
     const frame = Math.floor((seconds % 1) * fps);
-    resp += `:${frame}`;
+    resp += `:${pad(frame)}`;
   }
   return resp;
 }
