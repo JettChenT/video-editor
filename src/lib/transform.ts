@@ -84,54 +84,10 @@ function ilog(...args: any[]) {
 }
 
 async function export_timeline() {
-  return export_timeline_cmpfilt();
   const ff = useFF.getState().ff;
   const tl = useTimeline.getState();
-  const clips = tl.clips;
-  console.log("[info]", clips);
-  let flst = [];
-  for (let i = 0; i < clips.length; i++) {
-    const clip = clips[i];
-    const filoc = `i${i}.mp4`;
-    const foloc = `i${i}.ts`;
-    // transform it into ts
-    ff.FS("writeFile", filoc, await fetchFile(clip.location));
-    await ff.run("-i", filoc, "-c", "copy", foloc);
-    flst.push(`file '${foloc}'`);
-  }
-  ff.FS("writeFile", "concat_list.txt", flst.join("\n"));
-  console.log("[info]", ff.FS("readdir", "."));
-  let ffcommand = [];
-  ffcommand.push("-c:v", "libx264"), ffcommand.push(["-preset", "ultrafast"]);
-  ffcommand.push([
-    "-f",
-    "concat",
-    "-safe",
-    "0",
-    "-i",
-    "concat_list.txt",
-    "output.mp4",
-  ]);
-  await ff.run(
-    "-f",
-    "concat",
-    "-safe",
-    "0",
-    "-i",
-    "concat_list.txt",
-    "output.mp4",
-    "-preset",
-    "ultrafast"
-  );
-  const data = ff.FS("readFile", "output.mp4");
-  const url = URL.createObjectURL(
-    new Blob([data.buffer], { type: "video/mp4" })
-  );
-  return url;
-}
-async function export_timeline_cmpfilt() {
-  const ff = useFF.getState().ff;
-  const tl = useTimeline.getState();
+  const config = useConfig.getState();
+  const outloc = `${config.project_name}.mp4`;
   const clips = tl.clips;
   console.log("[info]", clips);
   let flst = [];
@@ -142,36 +98,31 @@ async function export_timeline_cmpfilt() {
     // transform it into ts
     ff.FS("writeFile", filoc, await fetchFile(clip.location));
     ilog("converting clip", clip.start, clip.end, filoc, foloc);
-    await ff.run("-ss", clip.start.toString(), "-to", clip.end.toString(), "-i", filoc, "-c", "copy", foloc);
+    await ff.run("-ss", clip.start.toString(), "-to", clip.end.toString(), "-i", filoc, foloc);
     flst.push(`file '${foloc}'`);
   }
   ff.FS("writeFile", "concat_list.txt", flst.join("\n"));
   console.log("[info]", ff.FS("readdir", "."));
   let ffcommand = [];
-  ffcommand.push("-c:v", "libx264"), ffcommand.push(["-preset", "ultrafast"]);
-  ffcommand.push([
+  // ffcommand.push("-preset", "ultrafast");
+  ffcommand.push(
     "-f",
     "concat",
     "-safe",
     "0",
     "-i",
     "concat_list.txt",
-    "output.mp4",
-  ]);
-  await ff.run(
-    "-f",
-    "concat",
-    "-safe",
-    "0",
-    "-i",
-    "concat_list.txt",
-    "output.mp4",
-    "-preset",
-    "ultrafast"
+    '-s', `${config.width}x${config.height}`, 
+    "-filter:v",
+    'fps='+config.fps.toString(),
+    outloc,
   );
-  const data = ff.FS("readFile", "output.mp4");
+  await ff.run(
+    ...ffcommand as string[]
+  );
+  const data = ff.FS("readFile", outloc);
   const url = URL.createObjectURL(
-    new Blob([data.buffer], { type: "video/mp4" })
+    new Blob([data.buffer], { type: "video/mp4"})
   );
   return url;
 }
@@ -199,6 +150,7 @@ async function vid_to_clip(video: Video): Promise<Clip> {
     start: 0,
     id: uuidv4(),
     end: duration,
+    parent: video
   };
 }
 

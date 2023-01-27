@@ -14,7 +14,7 @@ const VideoControls = () => {
   let playpause = useTimeline((st) => st.playpause);
   const cursor = useTimeline((st) => st.cursor);
   useEffect(() => {
-    const fps = useConfig.getState().fps;
+    const fps = 30;
     const ival = setInterval(() => {
       if (playing) {
         useTimeline.getState().updateCursor(1.0 / fps, true);

@@ -89,6 +89,7 @@ const TimeLine = () => {
                     key={clip.id}
                     id={clip.id}
                     clip={clip}
+                    index={i}
                 />
             )
         })}

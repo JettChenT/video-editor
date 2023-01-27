@@ -42,7 +42,7 @@ export default function FileUpload(){
   }, [addFile])
   const {getRootProps, getInputProps, isDragActive, open} = useDropzone({
     onDrop,
-    // TODO: Allow for audio files
+    // TODO: Allow for audio and image files
     accept: {
       "video/*": [".mp4", ".mov", ".avi", ".wmv", ".flv", ".mkv"]
     },
@@ -51,14 +51,15 @@ export default function FileUpload(){
   return (
     <div 
       {...getRootProps()}
-      className = "border-2 border-dashed border-gray-400 p-3 h-80"
+      className = {"border-2 border-dashed border-gray-400 p-3 h-full " + (isDragActive ? "bg-blue-200":"")}
     >
       {isDragActive ? (
         <p>Ready set drop!</p>
         ): (
         <p>
           Drop the files here ... (mp4)
-          <button className="btn btn-primary" onClick={open}>Open File Dialog</button>
+          <br/>
+          <button className="btn btn-primary btn-sm my-2" onClick={open}>Open File Dialog</button>
         </p>
       )}
       <input 

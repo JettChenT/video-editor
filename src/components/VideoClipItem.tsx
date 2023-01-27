@@ -24,9 +24,7 @@ const Item = forwardRef<HTMLDivElement, ItemProps>((props, ref) => {
       <p className="text-xs">
         {clip.name}
         <br />
-        {(clip.duration * 1.0).toFixed(2)}
-        <br/>
-        {clip.start}~{clip.end}
+        {(clip.duration).toFixed(2)}
       </p>
     </div>
     )

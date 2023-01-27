@@ -13,7 +13,8 @@ export interface Clip {
     id: string;
     duration: number;
     start: number;
-    end: number
+    end: number;
+    parent: Video
 }
 
 export interface Timeline{
@@ -25,6 +26,7 @@ export interface Timeline{
     currentClip: number | null;
     startTime: number[];
     activeId: string | null;
+    changeClip: (i:number, clip: Clip) => void;
     addClip: (clip: Clip) => void;
     removeClip: (clip: Clip) => void;
     splitClip: (loc: number) => void;
@@ -92,6 +94,14 @@ export const useTimeline = create<Timeline>((set, get) => ({
     vidRef: createRef<HTMLVideoElement>(),
     startTime: [],
     currentClip: null,
+    changeClip: (i:number, clip: Clip) => {
+        set(state => {
+            state.clips[i] = {...clip};
+            return {clips: state.clips};
+        });
+        get().updateStartTime();
+        get().updateVidInfo();
+    },
     addClip: (clip: Clip) => {
         set(state => ({ clips: [...state.clips, clip] }));
         get().updateStartTime();
@@ -214,9 +224,9 @@ export const useFF = create<ff>(set => ({
 
 export const useConfig = create<Config>((set,get) => ({
     fps: 24,
-    width: 1280,
-    height: 720,
-    project_name: "untitled project",
+    width: 720,
+    height: 480,
+    project_name: "Untitled Project",
     pixel_per_second: 40,
     pixel_per_gap: 40,
     set_pixel_per_second(p: number, d:boolean=false) { set(_ => ({

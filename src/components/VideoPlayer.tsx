@@ -19,15 +19,11 @@ const VideoPlayer = () => {
         videoRef.current?.currentTime
     })
     return (
-        <>
+        <div>
             <video 
                 ref={videoRef} 
-                controls
                 src={src?src:""}
-                style ={{
-                    "width": "720px",
-                    "height": "360px",
-                }}
+                className="bg-black h-full w-full"
                 onPlay={(e)=>{
                     ilog("playpause: ==play");
                     e.preventDefault()
@@ -38,7 +34,7 @@ const VideoPlayer = () => {
                 }}
             >
             </video>
-        </>
+        </div>
     )
 }
 
